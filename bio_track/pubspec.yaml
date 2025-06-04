@@ -1,0 +1,35 @@
+name: bio_track
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  supabase_flutter: ^1.10.15
+  shared_preferences: ^2.0.15
+  fl_chart: ^0.64.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "app_icon/app_icon.png"
+  adaptive_icon_background: "#00BCD4" 
+  adaptive_icon_foreground: "app_icon/app_icon.png"
+  remove_alpha_ios: true
+
+dependency_overrides:
+  sign_in_with_apple:
+    path: fake_plugins/sign_in_with_apple
+
+flutter:
+  uses-material-design: true
