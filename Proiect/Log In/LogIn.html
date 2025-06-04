@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Log In</title>
+  <link rel="icon" type="image/x-icon" href="../Imagini/favicon_io_BC/favicon.ico">
+  <link rel="stylesheet" href="LogIn_Stylesheet.css">
+</head>
+
+<body>
+  <div class="login-box">
+    <h2>Log In</h2>
+    <form id="loginForm">
+      <label for="role">Rol:</label>
+      <select id="role" name="role" onchange="updateForm()" required>
+        <option value=""></option>
+        <option value="pacient">Pacient</option>
+        <option value="medic">Doctor</option>
+        <option value="administrator">Administrator</option>
+      </select>
+
+      <label for="username" id="usernameLabel">CNP:</label>
+      <input type="text" id="username" name="username" placeholder="Introduceți CNP" required>
+
+      <label for="password">Parolă:</label>
+      <input type="password" id="password" name="password" placeholder="Introduceți parola" required>
+
+      <button type="submit">Log In</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabase = createClient(
+      'https://yqyhamgoeecfwyqgmhsd.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxeWhhbWdvZWVjZnd5cWdtaHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMTI5OTAsImV4cCI6MjA2MzU4ODk5MH0.2N_rq9R_oFd-HlHm0ka980ZP7PwdlxepDkAS7ZKWkzQ'
+    );
+
+    window.updateForm = function () {
+      const role = document.getElementById("role").value;
+      const usernameLabel = document.getElementById("usernameLabel");
+      const usernameInput = document.getElementById("username");
+
+      if (role === "pacient") {
+        usernameLabel.textContent = "CNP:";
+        usernameInput.placeholder = "Introduceți CNP";
+      } else {
+        usernameLabel.textContent = "ID:";
+        usernameInput.placeholder = "Introduceți ID-ul";
+      }
+    };
+
+    document.getElementById("loginForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const role = document.getElementById("role").value;
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const table = role;
+      const idField = role === "pacient" ? "cnp" :
+        role === "medic" ? "id_medic" :
+          "id_admin";
+
+      const { data, error } = await supabase
+        .from(table)
+        .select("*")
+        .eq(idField, username)
+        .eq("parola", password)
+        .single();
+
+      if (error || !data) {
+        alert("Autentificare eșuată. Verifică datele introduse.");
+      } else {
+        // Salvăm datele în localStorage
+        localStorage.setItem("userData", JSON.stringify(data));
+        localStorage.setItem("userRole", role);
+
+        // Redirecționare în funcție de rol
+        if (role === "pacient") {
+          window.location.href = "../Pacient/pacient.html";
+        } else if (role === "medic") {
+          window.location.href = "../Doctor/doctor.html";
+        } else if (role === "administrator") {
+          window.location.href = "../Admin/admin.html";
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

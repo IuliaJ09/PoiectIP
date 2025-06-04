@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Creare Medic</title>
+  <style>
+    .container {
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #f9f9f9;
+      font-family: Arial, sans-serif;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 20px;
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Creare Medic</h2>
+    <label for="inputNumeMedic">Nume:</label>
+    <input type="text" id="inputNumeMedic" placeholder="Nume" />
+
+    <label for="inputPrenumeMedic">Prenume:</label>
+    <input type="text" id="inputPrenumeMedic" placeholder="Prenume" />
+
+    <label for="inputParolaMedic">Parolă:</label>
+    <input type="password" id="inputParolaMedic" placeholder="Parola" />
+
+    <button id="btnCreeazaMedic">Creează Medic</button>
+  </div>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  
+    const supabaseUrl = 'https://yqyhamgoeecfwyqgmhsd.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxeWhhbWdvZWVjZnd5cWdtaHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMTI5OTAsImV4cCI6MjA2MzU4ODk5MH0.2N_rq9R_oFd-HlHm0ka980ZP7PwdlxepDkAS7ZKWkzQ';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+  
+    const inputNume = document.getElementById('inputNumeMedic');
+    const inputPrenume = document.getElementById('inputPrenumeMedic');
+    const inputParola = document.getElementById('inputParolaMedic');
+    const btnCreeaza = document.getElementById('btnCreeazaMedic');
+  
+    btnCreeaza.addEventListener('click', async () => {
+      const nume = inputNume.value.trim();
+      const prenume = inputPrenume.value.trim();
+      const parola = inputParola.value.trim();
+  
+      const validText = /^[A-Za-z]+$/;
+  
+      if (!nume || !prenume || !parola) {
+        alert('Toate câmpurile sunt obligatorii!');
+        return;
+      }
+  
+      if (!validText.test(nume)) {
+        alert('Numele trebuie să conțină doar litere!');
+        return;
+      }
+  
+      if (!validText.test(prenume)) {
+        alert('Prenumele trebuie să conțină doar litere!');
+        return;
+      }
+  
+      const { data: existing, error: fetchError } = await supabase
+        .from('medic')
+        .select('id_medic')
+        .order('id_medic', { ascending: false })
+        .limit(1);
+  
+      if (fetchError) {
+        alert('Eroare la obținerea ID-ului: ' + fetchError.message);
+        return;
+      }
+  
+      const nextId = existing.length > 0 ? existing[0].id_medic + 1 : 1;
+  
+      const { error } = await supabase
+        .from('medic')
+        .insert([{ id_medic: nextId, nume, prenume, parola }]);
+  
+      if (error) {
+        alert('Eroare la creare: ' + error.message);
+      } else {
+        alert('Medic creat cu succes!');
+        inputNume.value = '';
+        inputPrenume.value = '';
+        inputParola.value = '';
+      }
+    });
+  </script>
+  
+
+</body>
+</html>

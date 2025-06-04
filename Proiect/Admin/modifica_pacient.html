@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Modifică Pacient</title>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://yqyhamgoeecfwyqgmhsd.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxeWhhbWdvZWVjZnd5cWdtaHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMTI5OTAsImV4cCI6MjA2MzU4ODk5MH0.2N_rq9R_oFd-HlHm0ka980ZP7PwdlxepDkAS7ZKWkzQ';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    let pacientCurent = null;
+
+    function validareCNP(cnp) {
+      return /^\d{13}$/.test(cnp);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('searchInput');
+      const pacientList = document.getElementById('pacientList');
+      const formContainer = document.getElementById('formContainer');
+
+      const inputNume = document.getElementById('inputNume');
+      const inputPrenume = document.getElementById('inputPrenume');
+      const inputVarsta = document.getElementById('inputVarsta');
+      const inputAdresa = document.getElementById('inputAdresa');
+      const inputCNP = document.getElementById('inputCNP');
+      const selectMedic = document.getElementById('selectMedic');
+      const inputParola = document.getElementById('inputParola');
+
+      const btnSalveaza = document.getElementById('btnSalveaza');
+      const btnAnuleaza = document.getElementById('btnAnuleaza');
+
+      async function incarcaMedici() {
+        const { data, error } = await supabase.from('medic').select('id_medic, nume, prenume');
+        if (error) {
+          alert('Eroare la încărcarea medicilor: ' + error.message);
+          return;
+        }
+        selectMedic.innerHTML = '';
+        data.forEach(medic => {
+          const opt = document.createElement('option');
+          opt.value = medic.id_medic;
+          opt.textContent = `${medic.nume} ${medic.prenume}`;
+          selectMedic.appendChild(opt);
+        });
+      }
+
+      async function incarcaPacienti(filtru = '') {
+        let { data, error } = await supabase
+          .from('pacient')
+          .select('cnp, nume, prenume');
+
+        if (error) {
+          pacientList.innerHTML = `<p style="color:red;">Eroare: ${error.message}</p>`;
+          return;
+        }
+
+        if (filtru.trim()) {
+          const f = filtru.toLowerCase();
+          data = data.filter(p =>
+            p.nume.toLowerCase().includes(f) ||
+            p.prenume.toLowerCase().includes(f) ||
+            p.cnp.toString().includes(f)
+          );
+        }
+
+        if (data.length === 0) {
+          pacientList.innerHTML = '<p>Niciun pacient găsit.</p>';
+          return;
+        }
+
+        pacientList.innerHTML = '';
+        data.forEach(p => {
+          const div = document.createElement('div');
+          div.style.display = 'flex';
+          div.style.justifyContent = 'space-between';
+          div.style.marginBottom = '10px';
+          div.style.alignItems = 'center';
+
+          const info = document.createElement('span');
+          info.textContent = `${p.nume} ${p.prenume} (CNP: ${p.cnp})`;
+
+          const btn = document.createElement('button');
+          btn.textContent = 'Modifică';
+          btn.style.backgroundColor = 'blue';
+          btn.style.color = 'white';
+          btn.style.border = 'none';
+          btn.style.padding = '5px 10px';
+          btn.style.cursor = 'pointer';
+
+          btn.onclick = () => {
+            incarcaDatePacient(p.cnp);
+          };
+
+          div.appendChild(info);
+          div.appendChild(btn);
+          pacientList.appendChild(div);
+        });
+      }
+
+      async function incarcaDatePacient(cnp) {
+        const { data, error } = await supabase
+          .from('pacient')
+          .select('*')
+          .eq('cnp', cnp)
+          .single();
+
+        if (error) {
+          alert('Eroare la încărcarea pacientului: ' + error.message);
+          return;
+        }
+
+        pacientCurent = data;
+
+        inputNume.value = data.nume;
+        inputPrenume.value = data.prenume;
+        inputVarsta.value = data.varsta;
+        inputAdresa.value = data.adresa || '';
+        inputCNP.value = data.cnp;
+        inputParola.value = '';
+
+        await incarcaMedici();
+
+        selectMedic.value = data.id_medic ? data.id_medic.toString() : '';
+
+        formContainer.style.display = 'block';
+      }
+
+      btnSalveaza.addEventListener('click', async () => {
+        const numeNou = inputNume.value.trim();
+        const prenumeNou = inputPrenume.value.trim();
+        const varstaNoua = parseInt(inputVarsta.value);
+        const adresaNoua = inputAdresa.value.trim();
+        const cnpNou = inputCNP.value.trim();
+        const parolaNoua = inputParola.value.trim();
+        const medicSelectat = parseInt(selectMedic.value);
+
+        if (!numeNou || !prenumeNou || isNaN(varstaNoua) || isNaN(medicSelectat)) {
+          alert('Toate câmpurile obligatorii trebuie completate corect!');
+          return;
+        }
+
+        // Actualizare pacient în baza de date
+        const updateData = {
+          nume: numeNou,
+          prenume: prenumeNou,
+          varsta: varstaNoua,
+          adresa: adresaNoua,
+          id_medic: medicSelectat
+        };
+
+        if (parolaNoua) {
+          updateData.parola = parolaNoua;
+        }
+
+        const { error } = await supabase
+          .from('pacient')
+          .update(updateData)
+          .eq('cnp', pacientCurent.cnp);
+
+
+        if (error) {
+          alert('Eroare la actualizare: ' + error.message);
+        } else {
+          alert('Pacientul a fost actualizat cu succes!');
+        }
+      });
+
+
+      btnAnuleaza.addEventListener('click', () => {
+        formContainer.style.display = 'none';
+        pacientCurent = null;
+      });
+
+      searchInput.addEventListener('input', () => {
+        incarcaPacienti(searchInput.value);
+      });
+
+      incarcaPacienti();
+      formContainer.style.display = 'none';
+    });
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    #searchInput {
+      padding: 8px;
+      width: 300px;
+      margin-bottom: 20px;
+    }
+
+    #pacientList>div {
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+    }
+
+    #formContainer {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #999;
+      max-width: 400px;
+      background: #f9f9f9;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 6px;
+      margin-top: 3px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 8px 15px;
+      cursor: pointer;
+    }
+
+    #btnSalveaza {
+      background-color: green;
+      color: white;
+      border: none;
+    }
+
+    #btnAnuleaza {
+      background-color: grey;
+      color: white;
+      border: none;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>Modifică Pacient</h2>
+  <input type="text" id="searchInput" placeholder="Caută după nume, prenume sau CNP..." />
+
+  <div id="pacientList"></div>
+
+  <div id="formContainer" style="display:none;">
+    <h3>Detalii pacient</h3>
+    <label for="inputNume">Nume *</label>
+    <input type="text" id="inputNume" />
+
+    <label for="inputPrenume">Prenume *</label>
+    <input type="text" id="inputPrenume" />
+
+    <label for="inputVarsta">Vârstă *</label>
+    <input type="number" id="inputVarsta" min="0" />
+
+    <label for="inputAdresa">Adresă</label>
+    <input type="text" id="inputAdresa" />
+
+    <label for="inputCNP">CNP</label>
+    <input type="text" id="inputCNP" disabled />
+
+
+    <label for="selectMedic">Medic *</label>
+    <select id="selectMedic"></select>
+
+    <label for="inputParola">Parolă (lasă necompletat dacă nu vrei să schimbi)</label>
+    <input type="password" id="inputParola" autocomplete="new-password" />
+
+    <button id="btnSalveaza">Salvează modificările</button>
+    <button id="btnAnuleaza">Anulează</button>
+  </div>
+
+</body>
+
+</html>

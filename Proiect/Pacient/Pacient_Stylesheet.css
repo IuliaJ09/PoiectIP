@@ -1,0 +1,176 @@
+body 
+    {
+        background-image: url('../Imagini/pacient_pic.jpg');
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+    }
+.topnav {
+      overflow: hidden;
+      background-color: rgb(3, 45, 144, 0.8);
+      border-radius: 10px;
+    }
+    
+    .topnav a {
+      float: left;
+      color: #f2f2f2;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      font-size: 17px;
+    }
+    
+    .topnav a:hover {
+      background-color: rgba(81, 123, 222, 0.85);;
+      color: black;
+    }
+    
+    .topnav a.active {
+      background-color: #04AA6D;
+      color: white;
+    }
+
+    .topnav a.logout {
+      float: right;
+      background-color: #ff4d4d; /* roșu pentru delogare */
+      color: white;
+    }
+    
+    .topnav a.logout:hover {
+      background-color: #cc0000;
+      color: white;
+    }
+
+    .datepersonale{
+      background-color: rgb(185, 180, 180, 0.5);
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      width: 300px;
+      min-height: 500px;
+      margin-top: 50px;
+      margin-left: 10px;
+    }
+
+    .datepersonale a {
+      float: left;
+      color: #f2f2f2;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      font-size: 17px;
+    }
+
+    .datepersonale h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    
+    .datepersonale p {
+      margin: 10px 0;
+      color: #444;
+    }
+
+    .main-container {
+      display: flex;
+      gap: 20px;
+      padding: 30px;
+  }
+  
+  .content-box {
+      flex: 1;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      min-height: 500px;
+      margin-top: 50px;
+      margin-right: 10px;
+  }
+  
+  .content-box h3 {
+      margin-top: 0;
+      color: #333;
+  }
+  
+  .content-box p {
+      margin: 10px 0;
+      color: #444;
+  }
+  
+  .recomandare-card {
+      background-color: #f0f4f8;
+      border: 1px solid #cbd5e0;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+  }
+  .recomandare-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      color: #2c5282;
+  }
+  .recomandare-continut {
+      display: none;
+      margin-top: 10px;
+      color: #2d3748;
+  }
+  .recomandare-card.active {
+      background-color: #e2e8f0;
+  }
+  .recomandare-card.active .recomandare-continut {
+      display: block;
+  }
+
+
+  .alerta-box {
+    background-color: #ffe8e8;
+    border: 1px solid #ffaaaa;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(255, 0, 0, 0.2);
+  }
+  
+  .alerta-box:hover {
+    background-color: #ffdede;
+  }
+  
+  .alerta-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 16px;
+    color: #a30000;
+  }
+  
+  .continut-alerta {
+    margin-top: 10px;
+    color: #333;
+    font-size: 15px;
+  }
+  
+  .hidden {
+    display: none;
+  }
+
+  .fisa-medicala {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-top: 10px;
+  }
+  
+  .fisa-medicala p {
+    margin: 10px 0;
+    font-size: 16px;
+  }
+  
+
+    

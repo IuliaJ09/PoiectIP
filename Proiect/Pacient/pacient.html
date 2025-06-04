@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Pacient</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <link rel="icon" type="image/x-icon" href="../Imagini/favicon_io_BC/favicon.ico">
+  <link rel="stylesheet" href="Pacient_Stylesheet.css">
+</head>
+
+<body>
+
+  <script>
+    // Previne revenirea cu back dacă nu există sesiune validă
+    if (!localStorage.getItem("userData")) {
+      window.location.replace("../Log In/LogIn.html");
+    }
+
+    // Împiedică folosirea butonului „back”
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function () {
+      window.history.pushState(null, "", window.location.href);
+    };
+  </script>
+
+  <div class="topnav">
+    <a class="active" href="#" id="homeLink">Acasa</a>
+    <a href="#" id="recomandariLink">Recomandari</a>
+    <a href="#" id="istoricLink">Fișa medicală</a>
+    <a href="#" id="avertizariLink">Avertizari si alarme</a>
+    <a href="#" class="logout" id="logoutLink">Delogare</a>
+  </div>
+
+  <div class="main-container">
+    <div class="datepersonale">
+      <h3>Date personale</h3>
+      <p><strong>CNP:</strong> <span id="cnp"></span></p>
+      <p><strong>Nume:</strong> <span id="nume"></span></p>
+      <p><strong>Prenume:</strong> <span id="prenume"></span></p>
+      <p><strong>Vârstă:</strong> <span id="varsta"></span></p>
+      <p><strong>Adresă:</strong> <span id="adresa"></span></p>
+    </div>
+
+    <div class="content-box" id="contentBox">
+      <h3>Bine ai venit!</h3>
+      <p>Selectează o opțiune din meniu pentru a vedea informații.</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabase = createClient(
+      'https://yqyhamgoeecfwyqgmhsd.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxeWhhbWdvZWVjZnd5cWdtaHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMTI5OTAsImV4cCI6MjA2MzU4ODk5MH0.2N_rq9R_oFd-HlHm0ka980ZP7PwdlxepDkAS7ZKWkzQ'
+    );
+
+    function checkAuth() {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const userRole = localStorage.getItem("userRole");
+      if (!userData || userRole !== "pacient") {
+        alert("Acces interzis. Te vom redirecționa la logare.");
+        window.location.replace("../Log In/LogIn.html");
+        return false;
+      }
+      return userData;
+    }
+
+    // Logout
+    document.getElementById("logoutLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("userData");
+      localStorage.removeItem("userRole");
+      window.location.replace("../Log In/LogIn.html");
+    });
+
+    window.onload = () => {
+      if (performance.navigation.type === performance.navigation.TYPE_BACK_FORWARD) {
+        location.reload(true);
+      }
+
+      const userData = checkAuth();
+      if (!userData) return;
+
+      document.getElementById("cnp").textContent = userData.cnp || "";
+      document.getElementById("nume").textContent = userData.nume || "";
+      document.getElementById("prenume").textContent = userData.prenume || "";
+      document.getElementById("varsta").textContent = userData.varsta || "";
+      document.getElementById("adresa").textContent = userData.adresa || "";
+    };
+
+    // Verificare când revine la pagină cu Back
+    window.addEventListener("pageshow", () => {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const userRole = localStorage.getItem("userRole");
+      if (!userData || userRole !== "pacient") {
+        window.location.replace("../Log In/LogIn.html");
+      }
+    });
+
+    function activateLink(clickedLink) {
+      document.querySelectorAll(".topnav a").forEach(link => link.classList.remove("active"));
+      clickedLink.classList.add("active");
+    }
+
+    const contentBox = document.getElementById("contentBox");
+
+    document.getElementById("homeLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+      contentBox.innerHTML = `
+        <h3>Bine ai venit!</h3>
+        <p>Selectează o opțiune din meniu pentru a vedea informații.</p>
+      `;
+    });
+
+    document.getElementById("recomandariLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+      const userData = checkAuth();
+      if (!userData) return;
+
+      const { data, error } = await supabase
+        .from("recomandari_medici")
+        .select("*")
+        .eq("cnp", userData.cnp)
+        .order("data_emitere", { ascending: false });
+
+      if (error) {
+        contentBox.innerHTML = "<p>Eroare la încărcarea recomandărilor.</p>";
+        console.error(error);
+        return;
+      }
+
+      if (!data.length) {
+        contentBox.innerHTML = "<h3>Recomandări</h3><p>Nu există recomandări disponibile.</p>";
+        return;
+      }
+
+      contentBox.innerHTML = `<h3>Recomandări</h3>` + data.map((rec) => `
+        <div class="recomandare-card" onclick="this.classList.toggle('active')">
+          <div class="recomandare-header">
+            <span>${rec.tip}</span>
+            <span>${new Date(rec.data_emitere).toLocaleString()}</span>
+          </div>
+          <div class="recomandare-continut">${rec.continut}</div>
+        </div>
+      `).join("");
+    });
+
+    document.getElementById("istoricLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+      const userData = checkAuth();
+      if (!userData) return;
+
+      const { puls = "N/A", temperatura = "N/A", ecg = "" } = userData;
+
+      contentBox.innerHTML = `
+        <h3>Fișa medicală</h3>
+        <div class="fisa-medicala">
+          <p><strong>Puls:</strong> ${puls} bpm</p>
+          <p><strong>Temperatură:</strong> ${temperatura} °C</p>
+          <button id="ecgButton">Vezi ECG</button>
+        </div>
+      `;
+
+      document.getElementById("ecgButton").addEventListener("click", () => {
+        if (!ecg) {
+          alert("Nu există date ECG disponibile.");
+          return;
+        }
+        const encodedData = encodeURIComponent(ecg);
+        window.open(`ecg.html?data=${encodedData}`, "_blank", "width=1000,height=600");
+      });
+    });
+
+    document.getElementById("avertizariLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+      const userData = checkAuth();
+      if (!userData) return;
+
+      const { data, error } = await supabase
+        .from("alerte")
+        .select("*")
+        .eq("cnp", userData.cnp)
+        .order("data_alerta", { ascending: false });
+
+      if (error) {
+        contentBox.innerHTML = "<p>Eroare la încărcarea alertelor.</p>";
+        console.error(error);
+        return;
+      }
+
+      if (!data.length) {
+        contentBox.innerHTML = "<h3>Avertizări și alarme</h3><p>Nu există alerte disponibile.</p>";
+        return;
+      }
+
+      contentBox.innerHTML = `<h3>Avertizări și alarme</h3>` + data.map((alerta) => `
+        <div class="recomandare-card" onclick="this.classList.toggle('active')">
+          <div class="recomandare-header">
+            <span>Avertizare</span>
+            <span>${new Date(alerta.data_alerta).toLocaleString()}</span>
+          </div>
+          <div class="recomandare-continut">${alerta.mesaj}</div>
+        </div>
+      `).join("");
+    });
+  </script>
+</body>
+
+</html>

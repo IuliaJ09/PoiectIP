@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Interfață Doctor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Dezactivează cache-ul pentru această pagină -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="icon" href="../Imagini/favicon_io_BC/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="Doctor_Stylesheet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</head>
+
+<body>
+  <script>
+    // Verifică dacă userul este logat la încărcarea paginii
+    window.onload = () => {
+      const userData = localStorage.getItem("userData");
+      if (!userData) {
+        // Dacă nu e logat, redirecționează la login
+        window.location.href = "../Log In/LogIn.html";
+      }
+    };
+  </script>
+
+  <!-- Bara de navigare -->
+  <div class="topnav">
+    <a href="#" class="active" id="homeLink">Acasă</a>
+    <a href="#" id="crearePacientLink">Creare pacient</a>
+    <a href="#" id="adaugarePacientLink">Adăugare pacient</a>
+    <a href="#" id="raportPacientiLink">Raport pacienți</a>
+    <a href="#" id="recomandariLink">Recomandări</a>
+    <a href="#" class="logout" id="logout">Delogare</a>
+  </div>
+
+  <!-- Conținutul principal -->
+  <div class="main-container" id="contentBox">
+    <div class="datepersonale" id="dateDoctorBox">
+      <!-- Datele doctorului -->
+    </div>
+    <div class="content-box">
+      <h3>Bine ai venit!</h3>
+      <p>Selectează o opțiune din meniu pentru a începe.</p>
+    </div>
+  </div>
+
+  <!-- Modal pentru creare pacient -->
+  <div id="pacientModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" id="closeModal" style="cursor:pointer;">&times;</span>
+      <h3>Creare pacient</h3>
+      <form id="crearePacientForm">
+        <label for="cnp">CNP:</label>
+        <input type="text" id="cnp" required><span class="error" id="err-cnp" style="color:red;"></span>
+
+        <label for="nume">Nume:</label>
+        <input type="text" id="nume" required><span class="error" id="err-nume" style="color:red;"></span>
+
+        <label for="prenume">Prenume:</label>
+        <input type="text" id="prenume" required><span class="error" id="err-prenume" style="color:red;"></span>
+
+        <label for="varsta">Vârstă:</label>
+        <input type="number" id="varsta" required><span class="error" id="err-varsta" style="color:red;"></span>
+
+        <label for="adresa">Adresă:</label>
+        <input type="text" id="adresa" required><span class="error" id="err-adresa" style="color:red;"></span>
+
+        <label for="parola">Parolă:</label>
+        <input type="password" id="parola" required><span class="error" id="err-parola" style="color:red;"></span>
+
+        <button type="submit" style="margin-top:10px;">Crează pacient</button>
+      </form>
+      <p id="formMessage" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- Modal recomandare -->
+  <div id="modalRecomandare" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+  background: rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; border-radius:8px; max-width:400px; width:90%; text-align:center;">
+      <h3>Adaugă recomandare</h3>
+      <form id="formRecomandare">
+        <input type="hidden" id="formCnp" name="cnp" value="">
+        <div style="margin-bottom:10px; text-align:left;">
+          <label for="tip">Tip recomandare:</label><br>
+          <select id="tip" name="tip" required style="width:100%; padding:5px;">
+            <option value="">-- Selectează --</option>
+            <option value="recomandare">Recomandare</option>
+            <option value="avertizare">Avertizare</option>
+          </select>
+        </div>
+        <div style="margin-bottom:10px; text-align:left;">
+          <label for="continut">Conținut:</label><br>
+          <textarea id="continut" name="continut" rows="4" style="width:100%; padding:5px;" required></textarea>
+        </div>
+        <button type="submit" style="padding:8px 15px; cursor:pointer;">Trimite</button>
+        <button type="button" id="closeModalBtn"
+          style="padding:8px 15px; margin-left:10px; cursor:pointer;">Închide</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    // Inițializare Supabase
+    const supabase = createClient(
+      'https://yqyhamgoeecfwyqgmhsd.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxeWhhbWdvZWVjZnd5cWdtaHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMTI5OTAsImV4cCI6MjA2MzU4ODk5MH0.2N_rq9R_oFd-HlHm0ka980ZP7PwdlxepDkAS7ZKWkzQ'
+    );
+
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    const userRole = localStorage.getItem("userRole");
+
+    const modal = document.getElementById("pacientModal");
+    const closeModal = document.getElementById("closeModal");
+    const form = document.getElementById("crearePacientForm");
+    const formMessage = document.getElementById("formMessage");
+    const contentBox = document.querySelector(".content-box");
+    const dateDoctorBox = document.getElementById("dateDoctorBox");
+
+    // Afișare date personale doctor
+    if (userData && userRole === "medic") {
+      dateDoctorBox.innerHTML = `
+        <h3>Date personale</h3>
+        <p><strong>ID Medic:</strong> ${userData.id_medic}</p>
+        <p><strong>Nume:</strong> Dr. ${userData.nume} ${userData.prenume}</p>
+      `;
+    }
+
+    // Activare link în meniu
+    function activateLink(clickedLink) {
+      document.querySelectorAll(".topnav a").forEach(link => link.classList.remove("active"));
+      clickedLink.classList.add("active");
+    }
+
+    // Acasă
+    document.getElementById("homeLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+      contentBox.innerHTML = `
+        <h3>Bine ai venit!</h3>
+        <p>Selectează o opțiune din meniu pentru a începe.</p>
+      `;
+    });
+
+    // Creare pacient
+    document.getElementById("crearePacientLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+      modal.style.display = "block";
+      formMessage.textContent = "";
+      form.reset();
+      // Șterge mesajele de eroare
+      ["cnp", "nume", "prenume", "varsta", "adresa", "parola"].forEach(id => {
+        document.getElementById(`err-${id}`).textContent = "";
+      });
+    });
+
+    // Închidere modal
+    closeModal.onclick = () => modal.style.display = "none";
+    window.onclick = (event) => {
+      if (event.target === modal) modal.style.display = "none";
+    }
+
+    // Submit creare pacient
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      formMessage.textContent = "";
+      ["cnp", "nume", "prenume", "varsta", "adresa", "parola"].forEach(id => {
+        document.getElementById(`err-${id}`).textContent = "";
+      });
+
+      const id_medic = userData.id_medic;
+      const cnp = document.getElementById("cnp").value.trim();
+      const nume = document.getElementById("nume").value.trim();
+      const prenume = document.getElementById("prenume").value.trim();
+      const varsta = parseInt(document.getElementById("varsta").value.trim());
+      const adresa = document.getElementById("adresa").value.trim();
+      const parola = document.getElementById("parola").value.trim();
+
+      let hasError = false;
+      if (!/^\d{13}$/.test(cnp)) {
+        document.getElementById("err-cnp").textContent = "CNP invalid (13 cifre)";
+        hasError = true;
+      }
+      if (!nume) {
+        document.getElementById("err-nume").textContent = "Numele este obligatoriu";
+        hasError = true;
+      }
+      if (!prenume) {
+        document.getElementById("err-prenume").textContent = "Prenumele este obligatoriu";
+        hasError = true;
+      }
+      if (isNaN(varsta) || varsta < 0) {
+        document.getElementById("err-varsta").textContent = "Vârstă invalidă";
+        hasError = true;
+      }
+      if (!adresa) {
+        document.getElementById("err-adresa").textContent = "Adresa este obligatorie";
+        hasError = true;
+      }
+      if (parola.length < 4) {
+        document.getElementById("err-parola").textContent = "Parola prea scurtă";
+        hasError = true;
+      }
+
+      if (hasError) {
+        formMessage.textContent = "Te rugăm să corectezi erorile.";
+        formMessage.style.color = "red";
+        return;
+      }
+
+      // Inserare pacient în baza de date
+      const { error } = await supabase
+        .from("pacient")
+        .insert([{
+          cnp: cnp,  // ține ca string (CNP-ul este un număr mare, mai bine păstrăm string)
+          nume,
+          prenume,
+          varsta,
+          adresa,
+          parola,
+          id_medic,
+          ecg: "0",
+          temperatura: 0.0,
+          puls: 0
+        }]);
+
+      if (error) {
+        formMessage.textContent = "Eroare la inserare: " + error.message;
+        formMessage.style.color = "red";
+      } else {
+        modal.style.display = "none";
+        alert("Pacient creat cu succes!");
+      }
+    });
+
+    // Logout
+    document.getElementById("logout").addEventListener("click", (e) => {
+      e.preventDefault();
+      localStorage.removeItem("userData");
+      localStorage.removeItem("userRole");
+      window.location.href = "../Log In/LogIn.html";
+    });
+
+    // Adăugare pacient
+    document.getElementById("adaugarePacientLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+
+      const { data: pacienti, error } = await supabase
+        .from("pacient")
+        .select("cnp, nume, prenume, varsta, adresa, id_medic");
+
+      if (error) {
+        contentBox.innerHTML = `<p style="color:red;">Eroare la încărcarea pacienților: ${error.message}</p>`;
+        return;
+      }
+
+      let searchHTML = `
+        <input type="text" id="searchInput" placeholder="Caută pacient după nume sau prenume..." style="margin: 10px 0; padding: 5px; width: 100%;">
+        <div id="listaPacienti"></div>
+      `;
+
+      contentBox.innerHTML = searchHTML;
+
+      const listaPacienti = document.getElementById("listaPacienti");
+
+      function renderLista(filtru = "") {
+        listaPacienti.innerHTML = "";
+
+        pacienti
+          .filter(p => {
+            const text = (p.nume + " " + p.prenume).toLowerCase();
+            return text.includes(filtru.toLowerCase());
+          })
+          .forEach(p => {
+            const dejaAlocat = p.id_medic === userData.id_medic;
+
+            const pacientDiv = document.createElement("div");
+            pacientDiv.classList.add("pacient-box");
+
+            pacientDiv.innerHTML = `
+              <p><strong>${p.nume} ${p.prenume}</strong> (CNP: ${p.cnp})</p>
+              <p>Vârstă: ${p.varsta}, Adresă: ${p.adresa}</p>
+              ${dejaAlocat
+                ? `<p style="color:green;"><em>Deja adăugat în lista ta.</em></p>`
+                : `<button class="btn-adauga" data-cnp="${p.cnp}">Adaugă pacient</button>`}
+            `;
+
+            listaPacienti.appendChild(pacientDiv);
+          });
+
+        document.querySelectorAll(".btn-adauga").forEach(btn => {
+          btn.onclick = async () => {
+            const confirmare = confirm("Ești sigur că vrei să adaugi acest pacient?");
+            if (!confirmare) return;
+
+            const cnp = btn.getAttribute("data-cnp");
+
+            const { error: updateError } = await supabase
+              .from("pacient")
+              .update({ id_medic: userData.id_medic })
+              .eq("cnp", cnp);
+
+            if (updateError) {
+              alert("Eroare la adăugare: " + updateError.message);
+            } else {
+              alert("Pacientul a fost adăugat cu succes!");
+              document.getElementById("adaugarePacientLink").click();
+            }
+          };
+        });
+      }
+
+      renderLista();
+
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        renderLista(e.target.value);
+      });
+    });
+
+    // Raport pacienți
+    document.getElementById("raportPacientiLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+
+      contentBox.innerHTML = "<p>Se încarcă pacienții...</p>";
+
+      const { data: pacienti, error } = await supabase
+        .from("pacient")
+        .select("cnp, nume, prenume, varsta, adresa, ecg, temperatura, puls")
+        .eq("id_medic", userData.id_medic);
+
+      if (error) {
+        contentBox.innerHTML = `<p class="eroare">Eroare la încărcarea pacienților: ${error.message}</p>`;
+        return;
+      }
+
+      if (pacienti.length === 0) {
+        contentBox.innerHTML = "<p>Nu ai pacienți în lista ta.</p>";
+        return;
+      }
+
+      let html = `<h3>Lista pacienților tăi</h3><div class="lista-pacienti">`;
+
+      pacienti.forEach((p, index) => {
+        html += `
+      <div class="card-pacient" data-index="${index}">
+        <div class="card-header">${p.nume} ${p.prenume}</div>
+        <div class="card-detalii" style="display: none;">
+          <p><b>CNP:</b> ${p.cnp}</p>
+          <p><b>Vârstă:</b> ${p.varsta}</p>
+          <p><b>Adresă:</b> ${p.adresa}</p>
+          <p><b>Temperatură:</b> ${p.temperatura}</p>
+          <p><b>Puls:</b> ${p.puls}</p>
+          <button class="btn-ecg" data-ecg="${p.ecg}">Vezi ECG</button>
+        </div>
+      </div>
+    `;
+      });
+
+      html += "</div>";
+      contentBox.innerHTML = html;
+
+      // Toggle afișare detalii
+      document.querySelectorAll(".card-pacient").forEach(card => {
+        const header = card.querySelector(".card-header");
+        const detalii = card.querySelector(".card-detalii");
+
+        header.addEventListener("click", () => {
+          detalii.style.display = detalii.style.display === "none" ? "block" : "none";
+        });
+
+        const ecgBtn = card.querySelector(".btn-ecg");
+
+        ecgBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation(); // previne trigger-ul click-ului pe card
+          const ecgString = ecgBtn.dataset.ecg;
+          const popupURL = `ecg.html?data=${encodeURIComponent(ecgString)}`;
+          window.open(
+            popupURL,
+            "popupECG",
+            "width=800,height=500,top=100,left=100,resizable=yes,scrollbars=no"
+          );
+        });
+      });
+    });
+
+    document.getElementById("recomandariLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      activateLink(e.target);
+
+      contentBox.innerHTML = "<p>Se încarcă pacienții...</p>";
+
+      const { data: pacienti, error } = await supabase
+        .from("pacient")
+        .select("cnp, nume, prenume")
+        .eq("id_medic", userData.id_medic);
+
+      if (error) {
+        contentBox.innerHTML = `<p style="color:red;">Eroare: ${error.message}</p>`;
+        return;
+      }
+
+      if (pacienti.length === 0) {
+        contentBox.innerHTML = "<p>Nu ai pacienți în lista ta.</p>";
+        return;
+      }
+
+      let html = `<h3>Recomandări medicale</h3><div class="lista-recomandari">`;
+
+      pacienti.forEach(p => {
+        html += `
+      <div class="pacient-recomandare">
+        <p><strong>${p.nume} ${p.prenume}</strong> (CNP: ${p.cnp})</p>
+        <button class="btn-vezi" data-cnp="${p.cnp}">Vezi recomandări</button>
+        <button class="btn-adauga-recomandare" data-cnp="${p.cnp}">Adaugă recomandare</button>
+      </div>
+    `;
+      });
+
+      html += `</div>`;
+      contentBox.innerHTML = html;
+
+      // Buton Vezi recomandări
+      document.querySelectorAll(".btn-vezi").forEach(btn => {
+        btn.onclick = async () => {
+          const cnp = btn.getAttribute("data-cnp");
+
+          const { data: recomandari, error } = await supabase
+            .from("recomandari_medici")
+            .select("*")
+            .eq("cnp", cnp)
+            .order("data_emitere", { ascending: false });
+
+          if (error) {
+            alert("Eroare la încărcarea recomandărilor: " + error.message);
+            return;
+          }
+
+          const container = btn.parentElement;
+
+          // Elimină recomandările afișate anterior
+          const existent = container.querySelector(".lista-recomandari-detalii");
+          if (existent) {
+            existent.remove();
+            return;
+          }
+
+          let html = `<div class="lista-recomandari-detalii">`;
+
+          if (recomandari.length === 0) {
+            html += "<p>Nu există recomandări disponibile.</p>";
+          } else {
+            recomandari.forEach((rec) => {
+              html += `
+            <div class="recomandare-card" onclick="this.classList.toggle('active')">
+              <div class="recomandare-header">
+                <span>${rec.tip}</span>
+                <span>${new Date(rec.data_emitere).toLocaleString()}</span>
+              </div>
+              <div class="recomandare-continut">${rec.continut}</div>
+            </div>
+          `;
+            });
+          }
+
+          html += `</div>`;
+          container.insertAdjacentHTML("beforeend", html);
+        };
+      });
+
+      // Buton Adaugă recomandare 
+      document.querySelectorAll(".btn-adauga-recomandare").forEach(btn => {
+        btn.onclick = () => {
+          const cnp = btn.getAttribute("data-cnp");
+          const container = btn.parentElement;
+
+          const existingForm = container.querySelector(".popup-adauga-recomandare");
+          if (existingForm) {
+            existingForm.remove();
+            return;
+          }
+
+          const formHtml = `
+      <div class="popup-adauga-recomandare" style="background: #f0f0f0; padding: 15px; border: 1px solid #ccc; margin-top: 10px;">
+        <h4>Adaugă recomandare pentru CNP: ${cnp}</h4>
+        <label for="tipRecomandare-${cnp}">
+          Tip recomandare:
+          <select id="tipRecomandare-${cnp}" class="tipRecomandare" name="tipRecomandare">
+            <option value="recomandare">Recomandare</option>
+            <option value="avertizare">Avertizare</option>
+          </select>
+        </label>
+        <br><br>
+        <label for="continutRecomandare-${cnp}">
+          Conținut:
+          <textarea id="continutRecomandare-${cnp}" class="continutRecomandare" name="continutRecomandare" rows="4" cols="40" required></textarea>
+        </label>
+        <br><br>
+        <button class="submitRecomandare">Trimite</button>
+        <button class="cancelRecomandare">Anulează</button>
+        <p class="statusMesaj" style="color: green; margin-top: 10px;"></p>
+      </div>
+    `;
+
+          container.insertAdjacentHTML("beforeend", formHtml);
+
+          const submitBtn = container.querySelector(".submitRecomandare");
+          const cancelBtn = container.querySelector(".cancelRecomandare");
+          const statusMsg = container.querySelector(".statusMesaj");
+          const tipInput = container.querySelector(".tipRecomandare");
+          const continutInput = container.querySelector(".continutRecomandare");
+
+          cancelBtn.onclick = () => {
+            container.querySelector(".popup-adauga-recomandare").remove();
+          };
+
+          submitBtn.onclick = async () => {
+            const tip = tipInput.value;
+            const continut = continutInput.value.trim();
+
+            if (!continut) {
+              alert("Conținutul recomandării nu poate fi gol.");
+              return;
+            }
+
+            // 1. Cautăm cel mai mare id_recomandare
+            const { data: maxIdData, error: maxIdError } = await supabase
+              .from("recomandari_medici")
+              .select("id_recomandare")
+              .order("id_recomandare", { ascending: false })
+              .limit(1);
+
+            if (maxIdError || !maxIdData || maxIdData.length === 0) {
+              statusMsg.style.color = "red";
+              statusMsg.textContent = "Eroare la obținerea ID-ului: " + (maxIdError?.message || "Nicio recomandare găsită.");
+              return;
+            }
+
+            const idNou = maxIdData[0].id_recomandare + 1;
+
+            // 2. Inserăm recomandarea cu ID-ul nou
+            const { data, error } = await supabase
+              .from("recomandari_medici")
+              .insert([{
+                id_recomandare: idNou,
+                cnp: cnp,
+                id_medic: userData.id_medic,
+                tip: tip,
+                continut: continut,
+                trimisa: false
+              }]);
+
+            if (error) {
+              statusMsg.style.color = "red";
+              statusMsg.textContent = "Eroare la trimitere: " + error.message;
+              return;
+            }
+
+            statusMsg.style.color = "green";
+            statusMsg.textContent = "Recomandarea a fost adăugată cu succes!";
+
+            setTimeout(() => {
+              container.querySelector(".popup-adauga-recomandare").remove();
+            }, 2000);
+          };
+        };
+      });
+
+    });
+
+  </script>
+</body>
+
+</html>
