@@ -1,0 +1,92 @@
+<HTML>
+
+<HEAD>
+  <TITLE>Admin</TITLE>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="../Imagini/favicon_io_BC/favicon.ico">
+  <link rel="stylesheet" href="Admin_Stylesheet.css">
+</HEAD>
+
+
+<BODY>
+
+  <script>
+    // Previne revenirea cu back dacă nu există sesiune validă
+    if (!localStorage.getItem("userData")) {
+      window.location.replace("../Log In/LogIn.html");
+    }
+
+    // Împiedică folosirea butonului „back”
+    window.history.pushState(null, "", window.location.href);
+    window.onpopstate = function () {
+      window.history.pushState(null, "", window.location.href);
+    };
+  </script>
+
+
+  <div class="topnav">
+    <a href="#" class="logout" onclick="logout()">Delogare</a>
+  </div>
+
+  <div class="admin-sidebar">
+    <button onclick="showContent('pacienti')">Administrare Pacienți</button>
+    <button onclick="showContent('doctori')">Administrare Doctori</button>
+  </div>
+
+  <div id="admin-content" class="content-box">
+    
+  </div>
+
+
+
+
+
+
+
+  <script>
+    function openPopup(url) {
+      window.open(url, 'popupWindow', 'width=600,height=500,left=300,top=200');
+    }
+
+    function showContent(option) {
+      const contentDiv = document.getElementById("admin-content");
+
+      if (option === 'pacienti') {
+        contentDiv.innerHTML = `
+          <h2>Administrare Pacienți</h2>
+          <div class="action-buttons">
+            <button onclick="openPopup('adauga_pacient.html')">Adaugă pacient</button>
+            <button onclick="openPopup('sterge_pacient.html')">Șterge pacient</button>
+            <button onclick="openPopup('modifica_pacient.html')">Modifică pacient</button>
+          </div>
+        `;
+      } else if (option === 'doctori') {
+        contentDiv.innerHTML = `
+          <h2>Administrare Doctori</h2>
+          <div class="action-buttons">
+            <button onclick="openPopup('adauga_doctor.html')">Adaugă doctor</button>
+            <button onclick="openPopup('sterge_doctor.html')">Șterge doctor</button>
+            <button onclick="openPopup('modifica_doctor.html')">Modifică doctor</button>
+          </div>
+        `;
+      }
+    }
+
+    function logout() {
+      // Ștergem datele din localStorage
+      localStorage.removeItem("userData");
+      localStorage.removeItem("userRole");
+
+      // Redirect fără a salva în history
+      window.location.replace("../Log In/LogIn.html");
+    }
+
+
+
+  </script>
+
+
+
+</BODY>
+
+</HTML>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Grafic ECG</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    #ecgContainer {
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+
+    #ecgCanvas {
+      height: 400px;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Graficul ECG al pacientului</h2>
+  <div id="ecgContainer">
+    <canvas id="ecgCanvas"></canvas>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const ecgData = params.get("data");
+
+    if (!ecgData) {
+      document.body.innerHTML = "<p style='color:red;'>Nu s-au primit date ECG.</p>";
+    } else {
+      const valoriBrute = ecgData.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+      const valori = valoriBrute.filter((_, i) => i % 2 === 0);
+      const totalTimp = 10;
+      const deltaT = totalTimp / valoriBrute.length;
+      const labels = valori.map((_, i) => (i * deltaT * 2).toFixed(2));
+
+      const canvas = document.getElementById("ecgCanvas");
+      const minLatime = 1000;
+      const latimeCalculata = Math.max(minLatime, valori.length * 6); // 6px per punct
+      canvas.width = latimeCalculata;
+
+      const ctx = canvas.getContext("2d");
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "ECG",
+            data: valori,
+            borderColor: "blue",
+            backgroundColor: "rgba(0, 123, 255, 0.1)",
+            fill: true,
+            pointRadius: 0,
+            tension: 0.2
+          }]
+        },
+        options: {
+          animation: false,
+          responsive: false,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Timp (secunde)"
+              },
+              ticks: {
+                maxTicksLimit: 20,
+                autoSkip: true
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Valoare ECG"
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <title>Modifică Medic</title>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabase = createClient(
+      'https://yqyhamgoeecfwyqgmhsd.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxeWhhbWdvZWVjZnd5cWdtaHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMTI5OTAsImV4cCI6MjA2MzU4ODk5MH0.2N_rq9R_oFd-HlHm0ka980ZP7PwdlxepDkAS7ZKWkzQ'
+    );
+
+    let medicCurent = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('searchInput');
+      const medicList = document.getElementById('medicList');
+      const formContainer = document.getElementById('formContainer');
+
+      const inputNume = document.getElementById('inputNume');
+      const inputPrenume = document.getElementById('inputPrenume');
+      const inputParola = document.getElementById('inputParola');
+
+      const btnSalveaza = document.getElementById('btnSalveaza');
+      const btnAnuleaza = document.getElementById('btnAnuleaza');
+
+      async function incarcaMedici(filtru = '') {
+        let { data, error } = await supabase
+          .from('medic')
+          .select('id_medic, nume, prenume')
+          .neq('id_medic', 0); // exclude medicul "default"
+
+        if (error) {
+          medicList.innerHTML = `<p style="color:red;">Eroare: ${error.message}</p>`;
+          return;
+        }
+
+        if (filtru.trim()) {
+          const f = filtru.toLowerCase();
+          data = data.filter(m =>
+            m.nume.toLowerCase().includes(f) ||
+            m.prenume.toLowerCase().includes(f)
+          );
+        }
+
+        medicList.innerHTML = '';
+        if (data.length === 0) {
+          medicList.innerHTML = '<p>Niciun medic găsit.</p>';
+          return;
+        }
+
+        data.forEach(m => {
+          const div = document.createElement('div');
+          div.style.display = 'flex';
+          div.style.justifyContent = 'space-between';
+          div.style.marginBottom = '10px';
+          div.style.alignItems = 'center';
+
+          const info = document.createElement('span');
+          info.textContent = `${m.nume} ${m.prenume} (ID: ${m.id_medic})`;
+
+          const btn = document.createElement('button');
+          btn.textContent = 'Modifică';
+          btn.style.backgroundColor = 'blue';
+          btn.style.color = 'white';
+          btn.style.border = 'none';
+          btn.style.padding = '5px 10px';
+          btn.style.cursor = 'pointer';
+
+          btn.onclick = () => incarcaDateMedic(m.id_medic);
+
+          div.appendChild(info);
+          div.appendChild(btn);
+          medicList.appendChild(div);
+        });
+      }
+
+      async function incarcaDateMedic(id) {
+        const { data, error } = await supabase
+          .from('medic')
+          .select('*')
+          .eq('id_medic', id)
+          .single();
+
+        if (error) {
+          alert('Eroare la încărcarea medicului: ' + error.message);
+          return;
+        }
+
+        medicCurent = data;
+        inputNume.value = data.nume;
+        inputPrenume.value = data.prenume;
+        inputParola.value = '';
+        formContainer.style.display = 'block';
+      }
+
+      btnSalveaza.addEventListener('click', async () => {
+        if (!medicCurent) return;
+
+        const numeNou = inputNume.value.trim();
+        const prenumeNou = inputPrenume.value.trim();
+        const parolaNoua = inputParola.value.trim();
+
+        if (!numeNou || !prenumeNou) {
+          alert('Completează numele și prenumele.');
+          return;
+        }
+
+        const updateData = {
+          nume: numeNou,
+          prenume: prenumeNou
+        };
+
+        if (parolaNoua) updateData.parola = parolaNoua;
+
+        const { error } = await supabase
+          .from('medic')
+          .update(updateData)
+          .eq('id_medic', medicCurent.id_medic);
+
+        if (error) {
+          alert('Eroare la actualizare: ' + error.message);
+        } else {
+          alert('Medicul a fost actualizat cu succes.');
+          formContainer.style.display = 'none';
+          medicCurent = null;
+          incarcaMedici(searchInput.value);
+        }
+      });
+
+      btnAnuleaza.addEventListener('click', () => {
+        formContainer.style.display = 'none';
+        medicCurent = null;
+      });
+
+      searchInput.addEventListener('input', () => {
+        incarcaMedici(searchInput.value);
+      });
+
+      incarcaMedici();
+      formContainer.style.display = 'none';
+    });
+  </script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    #searchInput { padding: 8px; width: 300px; margin-bottom: 20px; }
+    #medicList > div { border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    #formContainer { margin-top: 20px; padding: 15px; border: 1px solid #999; max-width: 400px; background: #f9f9f9; }
+    label { display: block; margin-top: 10px; }
+    input { width: 100%; padding: 6px; margin-top: 3px; box-sizing: border-box; }
+    button { margin-top: 15px; padding: 8px 15px; cursor: pointer; }
+    #btnSalveaza { background-color: green; color: white; border: none; }
+    #btnAnuleaza { background-color: grey; color: white; border: none; margin-left: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Modifică Medic</h2>
+  <input type="text" id="searchInput" placeholder="Caută după nume sau prenume..." />
+  <div id="medicList"></div>
+  <div id="formContainer" style="display:none;">
+    <h3>Detalii medic</h3>
+    <label for="inputNume">Nume *</label>
+    <input type="text" id="inputNume" />
+    <label for="inputPrenume">Prenume *</label>
+    <input type="text" id="inputPrenume" />
+    <label for="inputParola">Parolă nouă (opțional)</label>
+    <input type="password" id="inputParola" autocomplete="new-password" />
+    <button id="btnSalveaza">Salvează</button>
+    <button id="btnAnuleaza">Anulează</button>
+  </div>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Adaugă Pacient</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 300px; padding: 5px; }
+    .error { color: red; font-size: 0.9em; }
+    #formMessage { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h2>Adaugă un pacient nou</h2>
+
+  <form id="pacientForm">
+    <label>CNP:
+      <input type="text" id="cnp" maxlength="13">
+      <div class="error" id="err-cnp"></div>
+    </label>
+
+    <label>Nume:
+      <input type="text" id="nume">
+      <div class="error" id="err-nume"></div>
+    </label>
+
+    <label>Prenume:
+      <input type="text" id="prenume">
+      <div class="error" id="err-prenume"></div>
+    </label>
+
+    <label>Vârstă:
+      <input type="number" id="varsta">
+      <div class="error" id="err-varsta"></div>
+    </label>
+
+    <label>Adresă:
+      <input type="text" id="adresa">
+      <div class="error" id="err-adresa"></div>
+    </label>
+
+    <label>Parolă:
+      <input type="password" id="parola">
+      <div class="error" id="err-parola"></div>
+    </label>
+
+    <label>Alege medic:
+      <select id="medicDropdown">
+        <option value="">-- Selectează medic --</option>
+      </select>
+      <div class="error" id="err-medic"></div>
+    </label>
+
+    <br>
+    <button type="submit">Creează pacient</button>
+    <div id="formMessage"></div>
+  </form>
+
+  <script>
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      "https://yqyhamgoeecfwyqgmhsd.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxeWhhbWdvZWVjZnd5cWdtaHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMTI5OTAsImV4cCI6MjA2MzU4ODk5MH0.2N_rq9R_oFd-HlHm0ka980ZP7PwdlxepDkAS7ZKWkzQ"
+    );
+
+    const form = document.getElementById("pacientForm");
+    const formMessage = document.getElementById("formMessage");
+    const medicDropdown = document.getElementById("medicDropdown");
+
+    // Încarcă medicii în dropdown
+    async function incarcaMedici() {
+      const { data, error } = await supabaseClient.from("medic").select("*");
+
+      if (error) {
+        console.error("Eroare la încărcarea medicilor:", error.message);
+        return;
+      }
+
+      data.forEach(medic => {
+        const opt = document.createElement("option");
+        opt.value = medic.id_medic;
+        opt.textContent = `${medic.nume} ${medic.prenume}`;
+        medicDropdown.appendChild(opt);
+      });
+    }
+
+    incarcaMedici();
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      formMessage.textContent = "";
+      document.querySelectorAll(".error").forEach(e => e.textContent = "");
+
+      const cnp = document.getElementById("cnp").value.trim();
+      const nume = document.getElementById("nume").value.trim();
+      const prenume = document.getElementById("prenume").value.trim();
+      const varsta = parseInt(document.getElementById("varsta").value.trim());
+      const adresa = document.getElementById("adresa").value.trim();
+      const parola = document.getElementById("parola").value.trim();
+      const id_medic = parseInt(medicDropdown.value);
+
+      let hasError = false;
+
+      if (!/^\d{13}$/.test(cnp)) {
+        document.getElementById("err-cnp").textContent = "CNP invalid (13 cifre)";
+        hasError = true;
+      }
+      if (!nume) {
+        document.getElementById("err-nume").textContent = "Numele este obligatoriu";
+        hasError = true;
+      }
+      if (!prenume) {
+        document.getElementById("err-prenume").textContent = "Prenumele este obligatoriu";
+        hasError = true;
+      }
+      if (isNaN(varsta) || varsta <= 0) {
+        document.getElementById("err-varsta").textContent = "Vârsta trebuie să fie pozitivă";
+        hasError = true;
+      }
+      if (!adresa) {
+        document.getElementById("err-adresa").textContent = "Adresa este obligatorie";
+        hasError = true;
+      }
+      if (parola.length < 4) {
+        document.getElementById("err-parola").textContent = "Parola prea scurtă (minim 4 caractere)";
+        hasError = true;
+      }
+      if (isNaN(id_medic)) {
+        document.getElementById("err-medic").textContent = "Selectează un medic";
+        hasError = true;
+      }
+
+      if (hasError) {
+        formMessage.textContent = "Te rugăm să corectezi erorile.";
+        formMessage.style.color = "red";
+        return;
+      }
+
+      const { error } = await supabaseClient.from("pacient").insert([{
+        cnp,
+        nume,
+        prenume,
+        varsta,
+        adresa,
+        parola,
+        id_medic,
+        ecg: "0",
+        temperatura: 0.0,
+        puls: 0
+      }]);
+
+      if (error) {
+        formMessage.textContent = "Eroare la inserare: " + error.message;
+        formMessage.style.color = "red";
+      } else {
+        formMessage.textContent = "Pacient creat cu succes!";
+        formMessage.style.color = "green";
+        form.reset();
+        medicDropdown.selectedIndex = 0;
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+    body 
+    {
+        background-image: url('../Imagini/Admin_bg.jpg');
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+    }
+    .topnav {
+        overflow: hidden;
+        background-color: rgb(3, 45, 144, 0.8);
+        border-radius: 10px;
+      }
+      
+      .topnav a {
+        float: left;
+        color: #f2f2f2;
+        text-align: center;
+        padding: 14px 16px;
+        text-decoration: none;
+        font-size: 17px;
+      }
+      
+      .topnav a:hover {
+        background-color: rgba(81, 123, 222, 0.85);;
+        color: black;
+      }
+      
+      .topnav a.active {
+        background-color: #04AA6D;
+        color: white;
+      }
+  
+      .topnav a.logout {
+        float: right;
+        background-color: #ff4d4d; /* roșu pentru delogare */
+        color: white;
+      }
+      
+      .topnav a.logout:hover {
+        background-color: #cc0000;
+        color: white;
+      }
+
+      .admin-sidebar {
+        position: fixed;
+        top: 50%;               /* așezare la mijlocul vertical */
+        left: 40px;             /* mai aproape de mijloc pe orizontală */
+        transform: translateY(-50%);  /* corectează poziția ca să fie fix la mijloc */
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .admin-sidebar button {
+        background-color: rgba(24, 111, 203, 0.844);
+        color: white;
+        padding: 12px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        width: 220px;
+        transition: background-color 0.3s ease;
+      }
+      
+      .admin-sidebar button:hover {
+        background-color: #0056b3;
+      }
+
+      .content-box {
+        margin-left: 300px;
+        margin-top: 10px;
+        padding: 30px;
+        background-color: rgba(255, 255, 255, 0.85);
+        border-radius: 12px;
+        min-height: 400px;
+        width: 60%;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
+      
+      .content-box h2 {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      
+      .action-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+      }
+      
+      .action-buttons button {
+        padding: 12px 25px;
+        font-size: 16px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        width: 200px;
+        transition: background-color 0.3s ease;
+      }
+      
+      .action-buttons button:hover {
+        background-color: #388e3c;
+      }
+
+      
+  
+      .form-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+  
+      .form-container label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+  
+      .form-container input, .form-container select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+      }
+  
+      .form-container button {
+        width: 100%;
+        padding: 12px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+  
+      .form-container button:hover {
+        background-color: #0056b3;
+      }
+      
+      

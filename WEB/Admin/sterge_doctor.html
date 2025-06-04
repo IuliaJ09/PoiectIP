@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Șterge doctor</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    button {
+      padding: 5px 10px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <h1>Listă medici</h1>
+  <table id="doctorTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nume</th>
+        <th>Prenume</th>
+        <th>Acțiuni</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://yqyhamgoeecfwyqgmhsd.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxeWhhbWdvZWVjZnd5cWdtaHNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMTI5OTAsImV4cCI6MjA2MzU4ODk5MH0.2N_rq9R_oFd-HlHm0ka980ZP7PwdlxepDkAS7ZKWkzQ';
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Populează tabela cu doctori (fără medicul cu id 0)
+    async function incarcaDoctori() {
+      const { data, error } = await supabase
+        .from('medic')
+        .select()
+        .neq('id_medic', 0);  
+
+      if (error) {
+        console.error("Eroare la preluarea medicilor:", error.message);
+        return;
+      }
+
+      const tbody = document.querySelector("#doctorTable tbody");
+      tbody.innerHTML = "";
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">Nu există medici înregistrați.</td></tr>`;
+        return;
+      }
+
+      data.forEach(medic => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${medic.id_medic}</td>
+          <td>${medic.nume}</td>
+          <td>${medic.prenume}</td>
+          <td><button class="sterge-medic-btn" data-id="${medic.id_medic}">Șterge</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function stergeMedic(id_medic) {
+      const confirmare = confirm("Ești sigur că vrei să ștergi acest medic?");
+      if (!confirmare) return;
+
+      try {
+        // Actualizează pacienții → id_medic = 0
+        const { error: updateError } = await supabase
+          .from('pacient')
+          .update({ id_medic: 0 })
+          .eq('id_medic', id_medic);
+
+        if (updateError) throw updateError;
+
+        // Șterge medicul
+        const { error: deleteError } = await supabase
+          .from('medic')
+          .delete()
+          .eq('id_medic', id_medic);
+
+        if (deleteError) throw deleteError;
+
+        alert("Medicul a fost șters, iar pacienții asociați au fost actualizați.");
+        incarcaDoctori(); // Reîncarcă lista
+      } catch (err) {
+        console.error("Eroare la ștergerea medicului:", err.message);
+        alert("A apărut o eroare la ștergerea medicului.");
+      }
+    }
+
+    document.addEventListener("click", function (e) {
+      if (e.target && e.target.classList.contains("sterge-medic-btn")) {
+        const id = e.target.dataset.id;
+        stergeMedic(parseInt(id));
+      }
+    });
+
+    incarcaDoctori();
+  </script>
+</body>
+</html>
