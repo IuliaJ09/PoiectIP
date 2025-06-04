@@ -1,0 +1,72 @@
+CREATE TABLE medic (
+  id_medic INTEGER PRIMARY KEY,
+  nume VARCHAR(13) NOT NULL CHECK (nume ~ '^[A-Za-z]+$'),
+  prenume VARCHAR(30) NOT NULL CHECK (prenume ~ '^[A-Za-z]+$'),
+  parola VARCHAR(30) NOT NULL
+);
+CREATE TABLE pacient (
+  cnp BIGINT PRIMARY KEY CHECK (char_length(cnp::text) = 13),
+  nume VARCHAR(13) NOT NULL CHECK (nume ~ '^[A-Za-z]+$'),
+  prenume VARCHAR(30) NOT NULL CHECK (prenume ~ '^[A-Za-z]+$'),
+  varsta INTEGER NOT NULL,
+  adresa VARCHAR(50),
+  parola VARCHAR(30) NOT NULL,
+  id_medic INTEGER NOT NULL REFERENCES medic(id_medic),
+  ecg FLOAT NOT NULL,
+  temperatura FLOAT NOT NULL,
+  puls INTEGER NOT NULL CHECK (puls BETWEEN 0 AND 999)
+);
+CREATE TABLE administrator (
+  id_admin INTEGER PRIMARY KEY,
+  parola VARCHAR(30) NOT NULL
+);
+CREATE TABLE recomandari_medici (
+  id_recomandare SERIAL PRIMARY KEY,
+  cnp BIGINT REFERENCES pacient(cnp),
+  id_medic INTEGER REFERENCES medic(id_medic),
+  tip VARCHAR(20) CHECK (tip IN ('recomandare', 'avertizare')),
+  continut TEXT NOT NULL,
+  data_emitere TIMESTAMP DEFAULT NOW(),
+  trimisa BOOLEAN DEFAULT FALSE
+);
+CREATE TABLE feedback_pacient (
+  id_feedback SERIAL PRIMARY KEY,
+  cnp BIGINT REFERENCES pacient(cnp),
+  tip VARCHAR(30) CHECK (tip IN ('alarma', 'simptom', 'observatie')),
+  mesaj TEXT NOT NULL,
+  data_trimitere TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE TABLE alerte (
+  id_alerta SERIAL PRIMARY KEY,
+  cnp BIGINT REFERENCES pacient(cnp),
+  mesaj TEXT NOT NULL,
+  data_alerta TIMESTAMP DEFAULT NOW()
+);
+CREATE OR REPLACE FUNCTION verifica_masuratori()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.ecg < 0.5 OR NEW.ecg > 5.0 THEN
+    INSERT INTO alerte (cnp, mesaj)
+    VALUES (NEW.cnp, 'ECG în afara intervalului normal');
+  END IF;
+
+  IF NEW.temperatura < 36.0 OR NEW.temperatura > 37.5 THEN
+    INSERT INTO alerte (cnp, mesaj)
+    VALUES (NEW.cnp, 'Temperatura anormală');
+  END IF;
+
+  IF NEW.puls < 60 OR NEW.puls > 100 THEN
+    INSERT INTO alerte (cnp, mesaj)
+    VALUES (NEW.cnp, 'Puls anormal');
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trigger_verifica_masuratori
+AFTER INSERT OR UPDATE ON pacient
+FOR EACH ROW
+EXECUTE FUNCTION verifica_masuratori();
+
